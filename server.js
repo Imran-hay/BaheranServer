@@ -1,8 +1,10 @@
 require('./config/db').connect()
+const cors = require('cors')
 const { addMonths, format, isAfter } = require('date-fns');
 
 const Contract = require('./models/contract')
 const Building = require('./models/building')
+cors()
 const io = require("socket.io")(5000, {
     cors: {
         origin: 'http://localhost:3000',
