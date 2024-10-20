@@ -5,11 +5,15 @@ const { addMonths, format, isAfter } = require('date-fns');
 const Contract = require('./models/contract')
 const Building = require('./models/building')
 
+
 const io = require("socket.io")(5000, {
-    cors: {
-        origin: 'https://baheran-rentals-swiv.vercel.app',
-        methods: ["GET", "POST"]
-    },
+  cors: {
+      origin: [
+          'https://baheran-reals-swiv.vercel.app', // Production URL
+          'http://localhost:3000' // Localhost (adjust port if necessary)
+      ],
+      methods: ["GET", "POST"]
+  },
 });
 
 // Set up an event listener for new client connections
