@@ -7,7 +7,7 @@ const Building = require('./models/building')
 
 const io = require("socket.io")(5000, {
     cors: {
-        origin: 'http://localhost:3000',
+        origin: 'https://baheran-rentals-swiv.vercel.app',
         methods: ["GET", "POST"]
     },
 });
