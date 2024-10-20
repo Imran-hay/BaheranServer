@@ -1,3 +1,5 @@
+
+require('./config/db').connect()
 const express = require('express'); // If using Express
 const cors = require('cors');
 const { addMonths, format, isAfter } = require('date-fns');
@@ -53,7 +55,7 @@ io.on('connection', (socket) => {
         }
     };
 
-    const intervalId = setInterval(checkConditionAndNotify, 90000); // Check every 90 seconds
+    const intervalId = setInterval(checkConditionAndNotify, 9000); // Check every 90 seconds
 
     socket.on("disconnect", () => {
         console.log("User disconnected!");
