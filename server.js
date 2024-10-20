@@ -1,69 +1,63 @@
-require('./config/db').connect()
-const cors = require('cors')
+const express = require('express'); // If using Express
+const cors = require('cors');
 const { addMonths, format, isAfter } = require('date-fns');
+const Contract = require('./models/contract');
+const Building = require('./models/building');
+const http = require('http');
 
-const Contract = require('./models/contract')
-const Building = require('./models/building')
+const app = express();
+const server = http.createServer(app);
 
+// CORS configuration
+const corsOptions = {
+    origin: [
+        'https://baheran-rentals-swiv.vercel.app', // Production URL
+        'http://localhost:3000' // Localhost
+    ],
+    methods: ["GET", "POST"],
+    credentials: true, // Allow credentials if needed
+};
 
-const io = require("socket.io")(5000, {
-  cors: {
-      origin: [
-          'https://baheran-reals-swiv.vercel.app', // Production URL
-          'http://localhost:3000' // Localhost (adjust port if necessary)
-      ],
-      methods: ["GET", "POST"]
-  },
+// Enable CORS
+app.use(cors(corsOptions));
+
+// Set up Socket.IO
+const io = require("socket.io")(server, {
+    cors: corsOptions, // Use the same options
 });
 
 // Set up an event listener for new client connections
 io.on('connection', (socket) => {
     console.log("User connected!");
 
-    // Example of a condition that triggers notifications
-    const checkConditionAndNotify = async() => {
-        // Replace this with your actual condition
-
+    const checkConditionAndNotify = async () => {
         const role = socket.handshake.query.role; // Access the userId parameter
         const id = socket.handshake.query.id; // Access the userId parameter
         console.log(`Role: ${role}`);
 
-    
-          const data = await updateExpiredContracts(role,id)
-          const data2 = await findUnpaidContracts(role,id)
-  
-          console.log(data)
-          console.log(data2)
-  
-          const conditionIsTrue = data.status; // Your condition check function
-          const conditionIsTrue2 = data2.status; // Your condition check function
-  
-          if (conditionIsTrue) {
-              // Broadcast a 'notifyUser' event to all connected clients
-              io.emit("notifyExpiration", `Contract Expiration for ${data.data.join(', ')}`);
-          }
-  
-          if(conditionIsTrue2)
-          {
+        const data = await updateExpiredContracts(role, id);
+        const data2 = await findUnpaidContracts(role, id);
+
+        console.log(data);
+        console.log(data2);
+
+        const conditionIsTrue = data.status;
+        const conditionIsTrue2 = data2.status;
+
+        if (conditionIsTrue) {
+            io.emit("notifyExpiration", `Contract Expiration for ${data.data.join(', ')}`);
+        }
+
+        if (conditionIsTrue2) {
             io.emit("notifyUnpaid", `Unpaid Contracts for ${data2.data.join(', ')}`);
-          }
-
-        
-
-     
-
-     
-
-        
+        }
     };
 
-    // Assuming you want to check the condition periodically
-    const intervalId = setInterval(checkConditionAndNotify, 90000); // Check every 5 seconds
+    const intervalId = setInterval(checkConditionAndNotify, 90000); // Check every 90 seconds
 
-    // Clean up when the client disconnects
     socket.on("disconnect", () => {
         console.log("User disconnected!");
-        clearInterval(intervalId); // Stop the interval when the user disconnects
+        clearInterval(intervalId);
     });
 });
 
@@ -225,3 +219,10 @@ setInterval(async () => {
     //console.log(result);
   
 }, 21600000); // 6 hours
+
+
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
