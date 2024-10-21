@@ -55,7 +55,7 @@ io.on('connection', (socket) => {
         }
     };
 
-    const intervalId = setInterval(checkConditionAndNotify, 90000); // Check every 90 seconds
+    const intervalId = setInterval(checkConditionAndNotify, 12 * 60 * 60 * 1000); // Check every 12 hour
 
     socket.on("disconnect", () => {
         console.log("User disconnected!");
