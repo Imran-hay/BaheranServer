@@ -9,8 +9,7 @@ const contractSchema = new mongoose.Schema({
         type: String,
         required: false, // Unique ID for the renter
   
-    },
-
+    }, 
     phone: {
       type: String,
       required: true,
