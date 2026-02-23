@@ -1,0 +1,82 @@
+trigger: 
+  branches:
+    include:
+    - main
+
+# Add resources to reference the external repository
+resources:
+  repositories:
+    - repository: external
+      type: git
+      name: OperationHopeDemo/operationhope.devops.git
+      ref: main
+
+pool:
+  name: Default
+
+name: 'dbadb$(Date:yyyyMMdd)$(Rev:.r)'
+
+stages:
+- stage: Build
+  displayName: 'Build Project'
+  jobs:  
+  - job: Display1
+    steps:
+    - powershell: echo "Echo from Job B"
+  
+  - job: Display2
+    steps:
+    - powershell: echo "Echo from Job C"
+
+- stage: Deployment_Test
+  dependsOn: Build
+  jobs:
+  - deployment: deploy_test
+    environment: 'test-env'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - powershell: echo "Deploying to ServerA"
+
+- stage: Deployment_Production
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+  dependsOn: Deployment_Test
+  jobs:
+  - deployment: deploy_prod
+    environment: 'prod-env'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - powershell: echo "Deploying to ServerB"
+          - powershell: echo "Deploying to ServerC"
+
+# Stage that uses the external template with minimal debugging
+- stage: Deployment_External
+  displayName: 'Deploy using External Template'
+  dependsOn: Deployment_Production
+  jobs:
+  - job: UpdateWorkItems
+    displayName: 'Update Work Items'
+    steps:
+    # Simple debug to confirm we're in the job
+    - powershell: |
+        Write-Host "=========================================="
+        Write-Host "Starting Update Work Items job"
+        Write-Host "About to load template from external repo"
+        Write-Host "Template path: deploy/Shared/Steps/updateWorkItems.yaml@external"
+        Write-Host "=========================================="
+      displayName: 'Debug - Before Template Load'
+
+    # ACTUAL TEMPLATE CALL
+    - template: deploy/Shared/Steps/updateWorkItems.yaml@external
+      parameters:
+        StageName: 'Deployment_QA'
+
+    # Simple debug to confirm we returned from template
+    - powershell: |
+        Write-Host "=========================================="
+        Write-Host "Template execution completed"
+        Write-Host "=========================================="
+      displayName: 'Debug - After Template Load'
